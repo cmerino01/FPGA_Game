@@ -13,7 +13,7 @@ module block_controller(
 	wire obs_fill;
 	
 	//these two values dictate the center of the block, incrementing and decrementing them leads the block to move in certain directions
-	reg [9:0] xpos, ypos, ypos_obs;
+	reg [9:0] xpos, ypos, ypos_obs, xpos_obs;
 	
 	
 	
@@ -34,7 +34,7 @@ module block_controller(
 	end
 		//the +-5 for the positions give the dimension of the block (i.e. it will be 10x10 pixels)
 	assign block_fill=vCount>=(ypos-30) && vCount<=(ypos+30) && hCount>=(xpos-30) && hCount<=(xpos+30);
-	assign obs_fill=vCount>=(ypos-10) && vCount<=(ypos+10) && hCount>=(xpos-120) && hCount<=(xpos+120);
+	assign obs_fill=vCount>=(ypos_obs-10) && vCount<=(ypos_obs+10) && hCount>=(xpos_obs-120) && hCount<=(xpos_obs+120);
 	
 	always@(posedge clk, posedge rst) 
 	begin
