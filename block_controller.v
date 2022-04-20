@@ -15,6 +15,7 @@ module block_controller(
 	reg [9:0] xpos, ypos;
 	
 	parameter RED   = 12'b1111_0000_0000;
+	parameter PURPLE  = 12'b1111_0000_1111;
 	
 	/*when outputting the rgb value in an always block like this, make sure to include the if(~bright) statement, as this ensures the monitor 
 	will output some data to every pixel and not just the images you are trying to display*/
@@ -22,12 +23,15 @@ module block_controller(
     	if(~bright )	//force black if not inside the display area
 			rgb = 12'b0000_0000_0000;
 		else if (block_fill) 
-			rgb = RED; 
+			rgb = RED;
+		else if (obs_fill)
+			rgb = PURPLE;
 		else	
 			rgb=background;
 	end
 		//the +-5 for the positions give the dimension of the block (i.e. it will be 10x10 pixels)
 	assign block_fill=vCount>=(ypos-30) && vCount<=(ypos+30) && hCount>=(xpos-30) && hCount<=(xpos+30);
+	assign obs_fill=vCount>=(ypos-10) && vCount<=(ypos+10) && hCount>=(xpos-120) && hCount<=(xpos+120);
 	
 	always@(posedge clk, posedge rst) 
 	begin
@@ -83,12 +87,21 @@ module block_controller(
 				background <= 12'b0000_0000_1111;
 	end
 	// Obstacles
-	/*
+	
 	always@(posedge clk, posedge rst) begin
 		if(rst)
-			//beans
+		begin 
+			//rough values for center of screen
+			xpos_obs<=450;
+			ypos_obs<=250;
+		end
 		else
-	*/
+		begin
+		ypos<=ypos+2;
+		if(ypos==514)
+			ypos<=34;
+		end
+	
 	
 	
 endmodule
