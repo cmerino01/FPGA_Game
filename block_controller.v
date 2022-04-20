@@ -10,9 +10,12 @@ module block_controller(
 	output reg [11:0] background
    );
 	wire block_fill;
+	wire obs_fill;
 	
 	//these two values dictate the center of the block, incrementing and decrementing them leads the block to move in certain directions
-	reg [9:0] xpos, ypos;
+	reg [9:0] xpos, ypos, ypos_obs;
+	
+	
 	
 	parameter RED   = 12'b1111_0000_0000;
 	parameter PURPLE  = 12'b1111_0000_1111;
@@ -97,9 +100,9 @@ module block_controller(
 		end
 		else
 		begin
-		ypos<=ypos+2;
-		if(ypos==514)
-			ypos<=34;
+		ypos_obs<=ypos_obs+2;
+		if(ypos_obs==514)
+			ypos_obs<=34;
 		end
 	
 	
