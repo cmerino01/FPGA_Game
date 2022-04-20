@@ -101,17 +101,17 @@ module block_controller(
 			//rough values for center of screen
 			xpos_obs<=450;
 			ypos_obs<=250;
-			xpos_vobs<=450;
+			xpos_vobs<=300;
 			ypos_vobs<=250;
 		end
 		else
 		begin
 		ypos_obs<=ypos_obs+2;
-		xpos_vobs<=xpos_vobs+2;
+		ypos_vobs<=ypos_vobs+4;
 		if(ypos_obs==514)
 			ypos_obs<=34;
-		if(xpos_vobs==800)
-			xpos_vobs<=150;
+		if(ypos_vobs==514)
+			ypos_vobs<=34;
 		end
 		end
 endmodule
