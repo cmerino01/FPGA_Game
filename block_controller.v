@@ -27,7 +27,7 @@ module block_controller(
 			rgb=background;
 	end
 		//the +-5 for the positions give the dimension of the block (i.e. it will be 10x10 pixels)
-	assign block_fill=vCount>=(ypos-5) && vCount<=(ypos+5) && hCount>=(xpos-5) && hCount<=(xpos+5);
+	assign block_fill=vCount>=(ypos-30) && vCount<=(ypos+30) && hCount>=(xpos-30) && hCount<=(xpos+30);
 	
 	always@(posedge clk, posedge rst) 
 	begin
@@ -82,7 +82,13 @@ module block_controller(
 			else if(up)
 				background <= 12'b0000_0000_1111;
 	end
-
+	// Obstacles
+	/*
+	always@(posedge clk, posedge rst) begin
+		if(rst)
+			//beans
+		else
+	*/
 	
 	
 endmodule
