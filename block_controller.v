@@ -10,16 +10,26 @@ module block_controller(
 	output reg [11:0] background
    );
 	wire block_fill;
-	wire obs_fill;
-	wire vobs_fill;
+	wire obs_fill; //street line
+	wire vobs_fill; //street line
+	wire streeta_fill; 
+	wire streetb_fill;
+	wire car1_fill;
+	wire car2_fill;
+	wire car3_fill;
+	wire car4_fill;
 	
 	//these two values dictate the center of the block, incrementing and decrementing them leads the block to move in certain directions
-	reg [9:0] xpos, ypos, ypos_obs, xpos_obs, ypos_vobs, xpos_vobs;
+	reg [9:0] xpos, ypos,xpos_streeta, ypos_streeta, xpos_streetb, ypos_streetb, ypos_obs, xpos_obs, ypos_vobs, xpos_vobs, xpos_car1, ypos_car1, xpos_car2, ypos_car2,xpos_car3, ypos_car3 , xpos_car4, ypos_car4;
 	
 	
 	
 	parameter RED   = 12'b1111_0000_0000;
 	parameter PURPLE  = 12'b1111_0000_1111;
+	parameter WHITE = 12'b1111_1111_1111;
+	parameter BLUE = 12'b0000_1000_1010;
+	parameter YELLOW = 12'b1111_1110_1000;
+	parameter SILVER = 12'b1011_1011_1011;
 	
 	/*when outputting the rgb value in an always block like this, make sure to include the if(~bright) statement, as this ensures the monitor 
 	will output some data to every pixel and not just the images you are trying to display*/
@@ -29,9 +39,21 @@ module block_controller(
 		else if (block_fill) 
 			rgb = RED;
 		else if (obs_fill)
-			rgb = PURPLE;
+			rgb = WHITE;
 		else if (vobs_fill)
-			rgb = PURPLE;
+			rgb = WHITE;
+		else if (streeta_fill)
+			rgb = WHITE;
+		else if (streetb_fill)
+			rgb = WHITE;
+        else if (car1_fill)
+            rgb = PURPLE;
+        else if (car2_fill)
+            rgb = BLUE;
+        else if (car3_fill)
+            rgb = YELLOW;
+        else if (car4_fill)
+            rgb = SILVER;
 		else	
 			rgb=background;
 	end
@@ -39,6 +61,12 @@ module block_controller(
 	assign block_fill=vCount>=(ypos-30) && vCount<=(ypos+30) && hCount>=(xpos-30) && hCount<=(xpos+30);
 	assign obs_fill=vCount>=(ypos_obs-10) && vCount<=(ypos_obs+10) && hCount>=(xpos_obs-40) && hCount<=(xpos_obs+40);
 	assign vobs_fill=vCount>=(ypos_vobs-10) && vCount<=(ypos_vobs+10) && hCount>=(xpos_vobs-40) && hCount<=(xpos_vobs+40);
+	assign streeta_fill=vCount>=(ypos_streeta-10) && vCount<=(ypos_streeta+10) && hCount>=(xpos_streeta-40) && hCount<=(xpos_streeta+40);
+	assign streetb_fill=vCount>=(ypos_streetb-10) && vCount<=(ypos_streetb+10) && hCount>=(xpos_streetb-40) && hCount<=(xpos_streetb+40);
+	assign car1_fill=vCount>=(ypos_car1-34) && vCount<=(ypos_car1+34) && hCount>=(xpos_car1-34) && hCount<=(xpos_car1+34);
+	assign car2_fill=vCount>=(ypos_car2-34) && vCount<=(ypos_car2+34) && hCount>=(xpos_car2-34) && hCount<=(xpos_car2+34);
+	assign car3_fill=vCount>=(ypos_car3-34) && vCount<=(ypos_car3+34) && hCount>=(xpos_car3-34) && hCount<=(xpos_car3+34);
+	assign car4_fill=vCount>=(ypos_car4-34) && vCount<=(ypos_car4+34) && hCount>=(xpos_car4-34) && hCount<=(xpos_car4+34);
 	
 	always@(posedge clk, posedge rst) 
 	begin
@@ -82,8 +110,8 @@ module block_controller(
 	//the background color reflects the most recent button press
 	always@(posedge clk, posedge rst) begin
 		if(rst)
-			background <= 12'b1111_1111_1111;
-		else 
+			background <= 12'b1000_1000_1000;
+		/*else 
 			if(right)
 				background <= 12'b1111_1111_0000;
 			else if(left)
@@ -92,6 +120,7 @@ module block_controller(
 				background <= 12'b0000_1111_0000;
 			else if(up)
 				background <= 12'b0000_0000_1111;
+				*/
 	end
 	// Obstacles
 	
@@ -100,18 +129,48 @@ module block_controller(
 		begin 
 			//rough values for center of screen
 			xpos_obs<=450;
-			ypos_obs<=250;
-			xpos_vobs<=300;
-			ypos_vobs<=250;
+			ypos_obs<=180;
+			xpos_vobs<=450;
+			ypos_vobs<=380;
+			xpos_streeta<=90;
+			ypos_streeta<=180;
+			xpos_streetb<=90;
+			ypos_streetb<=380;
+			xpos_car1<=450;
+			ypos_car1<=130;
+			xpos_car2<=450;
+			ypos_car2<=450;
+			xpos_car3<=450;
+			ypos_car3<=320;
+			xpos_car4<=600;
+			ypos_car4<=250;
 		end
 		else
 		begin
-		ypos_obs<=ypos_obs+2;
-		ypos_vobs<=ypos_vobs+4;
-		if(ypos_obs==514)
-			ypos_obs<=34;
-		if(ypos_vobs==514)
-			ypos_vobs<=34;
+		xpos_obs<=xpos_obs+8;
+		xpos_vobs<=xpos_vobs+8;
+		xpos_streeta<=xpos_streeta+8;
+		xpos_streetb<=xpos_streetb+8;
+		xpos_car1<=xpos_car1+4;
+		xpos_car2<=xpos_car2+8;
+		xpos_car3<=xpos_car3+2;
+		xpos_car4<=xpos_car4+6;
+		if(xpos_obs==800)
+			xpos_obs<=150;
+		if(xpos_vobs==800)
+			xpos_vobs<=150;
+		if(xpos_streeta==800)
+			xpos_streeta<=150;
+		if(xpos_streetb==800)
+			xpos_streetb<=150;
+		if(xpos_car1==800)
+		    xpos_car1<=150;
+		if(xpos_car2==800)
+		    xpos_car2<=150;
+		if(xpos_car3==800)
+		    xpos_car3<=150;
+		if(xpos_car4==800)
+		    xpos_car4<=150;
 		end
 		end
 endmodule
