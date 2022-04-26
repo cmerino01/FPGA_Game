@@ -7,7 +7,8 @@ module block_controller(
 	input up, input down, input left, input right,
 	input [9:0] hCount, vCount,
 	output reg [11:0] rgb,
-	output reg [11:0] background
+	output reg [11:0] background,
+	output reg [2:0] lives
    );
 	wire block_fill;
 	wire obs_fill; //street line
@@ -22,14 +23,14 @@ module block_controller(
 	//these two values dictate the center of the block, incrementing and decrementing them leads the block to move in certain directions
 	reg [9:0] xpos, ypos,xpos_streeta, ypos_streeta, xpos_streetb, ypos_streetb, ypos_obs, xpos_obs, ypos_vobs, xpos_vobs, xpos_car1, ypos_car1, xpos_car2, ypos_car2,xpos_car3, ypos_car3 , xpos_car4, ypos_car4;
 	
-	
+	reg[2:0] lives = 3'b111;
 	
 	parameter RED   = 12'b1111_0000_0000;
 	parameter PURPLE  = 12'b1111_0000_1111;
 	parameter WHITE = 12'b1111_1111_1111;
-	parameter BLUE = 12'b0000_1000_1010;
+	parameter BLUE = 12'b0000_0000_1111;
 	parameter YELLOW = 12'b1111_1110_1000;
-	parameter SILVER = 12'b1011_1011_1011;
+	parameter GREEN = 12'b0000_1111_0000;
 	
 	/*when outputting the rgb value in an always block like this, make sure to include the if(~bright) statement, as this ensures the monitor 
 	will output some data to every pixel and not just the images you are trying to display*/
@@ -53,9 +54,18 @@ module block_controller(
         else if (car3_fill)
             rgb = YELLOW;
         else if (car4_fill)
-            rgb = SILVER;
+            rgb = GREEN;
 		else	
 			rgb=background;
+			
+		if(block_fill && car1_fill)
+		  lives = lives - 1;
+		if(block_fill && car2_fill)
+		  lives = lives - 1;
+		if(block_fill && car3_fill)
+		  lives = lives - 1;
+		if(block_fill && car4_fill)
+		  lives = lives - 1;
 	end
 		//the +-5 for the positions give the dimension of the block (i.e. it will be 10x10 pixels)
 	assign block_fill=vCount>=(ypos-30) && vCount<=(ypos+30) && hCount>=(xpos-30) && hCount<=(xpos+30);
