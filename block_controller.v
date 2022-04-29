@@ -8,7 +8,8 @@ module block_controller(
 	input [9:0] hCount, vCount,
 	output reg [11:0] rgb,
 	output reg [11:0] background,
-	output reg [2:0] lives
+	output reg [2:0] lives,
+	output reg [3:0] state
    );
 	wire block_fill;
 	wire obs_fill; //street line
@@ -22,8 +23,17 @@ module block_controller(
 	
 	//these two values dictate the center of the block, incrementing and decrementing them leads the block to move in certain directions
 	reg [9:0] xpos, ypos,xpos_streeta, ypos_streeta, xpos_streetb, ypos_streetb, ypos_obs, xpos_obs, ypos_vobs, xpos_vobs, xpos_car1, ypos_car1, xpos_car2, ypos_car2,xpos_car3, ypos_car3 , xpos_car4, ypos_car4;
+	reg hitFlag;
+	reg [8:0] hitCount; // need up to 382 counter
+	//reg [2:0] lives;
+	//reg [3:0] state;
 	
-	reg[2:0] lives = 3'b111;
+	localparam
+	INITIAL = 4'b0001,
+	GAMING	= 4'b0010,
+	HIT     = 4'b0100,
+	DONE	  = 4'b1000;
+	assign {Qd, Qh, Qg, Qi} = state;
 	
 	parameter RED   = 12'b1111_0000_0000;
 	parameter PURPLE  = 12'b1111_0000_1111;
@@ -32,10 +42,73 @@ module block_controller(
 	parameter YELLOW = 12'b1111_1110_1000;
 	parameter GREEN = 12'b0000_1111_0000;
 	
+	//the +- dimensions for each block/obstacle, for collision detection and pixel coloring
+	assign block_fill=vCount>=(ypos-30) && vCount<=(ypos+30) && hCount>=(xpos-30) && hCount<=(xpos+30);
+	assign obs_fill=vCount>=(ypos_obs-10) && vCount<=(ypos_obs+10) && hCount>=(xpos_obs-40) && hCount<=(xpos_obs+40);
+	assign vobs_fill=vCount>=(ypos_vobs-10) && vCount<=(ypos_vobs+10) && hCount>=(xpos_vobs-40) && hCount<=(xpos_vobs+40);
+	assign streeta_fill=vCount>=(ypos_streeta-10) && vCount<=(ypos_streeta+10) && hCount>=(xpos_streeta-40) && hCount<=(xpos_streeta+40);
+	assign streetb_fill=vCount>=(ypos_streetb-10) && vCount<=(ypos_streetb+10) && hCount>=(xpos_streetb-40) && hCount<=(xpos_streetb+40);
+	assign car1_fill=vCount>=(ypos_car1-34) && vCount<=(ypos_car1+34) && hCount>=(xpos_car1-34) && hCount<=(xpos_car1+34);
+	assign car2_fill=vCount>=(ypos_car2-34) && vCount<=(ypos_car2+34) && hCount>=(xpos_car2-34) && hCount<=(xpos_car2+34);
+	assign car3_fill=vCount>=(ypos_car3-34) && vCount<=(ypos_car3+34) && hCount>=(xpos_car3-34) && hCount<=(xpos_car3+34);
+	assign car4_fill=vCount>=(ypos_car4-34) && vCount<=(ypos_car4+34) && hCount>=(xpos_car4-34) && hCount<=(xpos_car4+34);
+	
+	
+	//start of state machine
+always @(posedge clk, posedge rst) //asynchronous active_high Reset
+begin: CU_n_DU
+	if (rst) 
+		begin
+			lives <= 3'bXXX;
+			state <= INITIAL;
+			hitCount <= 9'bxxxxxxxxx;
+		end
+    else // under positive edge of the clock
+		begin
+			case(state)
+				INITIAL:
+					begin
+					lives <= 3'b111;
+					hitCount <= 9'b000000000;
+					if(up)
+						state <= GAMING;
+					end
+				GAMING:
+					begin
+						// Controls enabled
+						if(hitFlag) // Hitflag set on the pixel loop which checks collision
+							lives <= lives - 1;
+							if(lives == 1)
+								state <= DONE;
+							else
+								begin
+									state <= HIT;
+								end
+					end
+				HIT:
+					begin
+						hitCount <= hitCount + 1;
+						if(hitCount >= 382) // 2 Seconds
+						begin
+							hitCount <= 0;
+							state <= GAMING;
+						end
+					end
+				DONE:
+				  begin
+					// Disable Controls
+					if(down)
+						state <= INITIAL;
+					end
+			endcase
+		end   
+ end // end of always procedural block 
+	
 	/*when outputting the rgb value in an always block like this, make sure to include the if(~bright) statement, as this ensures the monitor 
 	will output some data to every pixel and not just the images you are trying to display*/
+	// Responsible for pixel colors
 	always@ (*) begin
-    	if(~bright )	//force black if not inside the display area
+		if(~bright )	//force black if not inside the display area
 			rgb = 12'b0000_0000_0000;
 		else if (block_fill) 
 			rgb = RED;
@@ -47,36 +120,23 @@ module block_controller(
 			rgb = WHITE;
 		else if (streetb_fill)
 			rgb = WHITE;
-        else if (car1_fill)
-            rgb = PURPLE;
-        else if (car2_fill)
-            rgb = BLUE;
-        else if (car3_fill)
-            rgb = YELLOW;
-        else if (car4_fill)
-            rgb = GREEN;
+		else if (car1_fill)
+				rgb = PURPLE;
+		else if (car2_fill)
+				rgb = BLUE;
+		else if (car3_fill)
+				rgb = YELLOW;
+		else if (car4_fill)
+				rgb = GREEN;
 		else	
 			rgb=background;
 			
-		if(block_fill && car1_fill)
-		  lives = lives - 1;
-		if(block_fill && car2_fill)
-		  lives = lives - 1;
-		if(block_fill && car3_fill)
-		  lives = lives - 1;
-		if(block_fill && car4_fill)
-		  lives = lives - 1;
+		// Communication with State machine
+		if((block_fill && (car1_fill||car2_fill||car3_fill||car4_fill)) && (state == GAMING))
+			hitFlag = 1;
+		else if(state == HIT)
+			hitFlag = 0;
 	end
-		//the +-5 for the positions give the dimension of the block (i.e. it will be 10x10 pixels)
-	assign block_fill=vCount>=(ypos-30) && vCount<=(ypos+30) && hCount>=(xpos-30) && hCount<=(xpos+30);
-	assign obs_fill=vCount>=(ypos_obs-10) && vCount<=(ypos_obs+10) && hCount>=(xpos_obs-40) && hCount<=(xpos_obs+40);
-	assign vobs_fill=vCount>=(ypos_vobs-10) && vCount<=(ypos_vobs+10) && hCount>=(xpos_vobs-40) && hCount<=(xpos_vobs+40);
-	assign streeta_fill=vCount>=(ypos_streeta-10) && vCount<=(ypos_streeta+10) && hCount>=(xpos_streeta-40) && hCount<=(xpos_streeta+40);
-	assign streetb_fill=vCount>=(ypos_streetb-10) && vCount<=(ypos_streetb+10) && hCount>=(xpos_streetb-40) && hCount<=(xpos_streetb+40);
-	assign car1_fill=vCount>=(ypos_car1-34) && vCount<=(ypos_car1+34) && hCount>=(xpos_car1-34) && hCount<=(xpos_car1+34);
-	assign car2_fill=vCount>=(ypos_car2-34) && vCount<=(ypos_car2+34) && hCount>=(xpos_car2-34) && hCount<=(xpos_car2+34);
-	assign car3_fill=vCount>=(ypos_car3-34) && vCount<=(ypos_car3+34) && hCount>=(xpos_car3-34) && hCount<=(xpos_car3+34);
-	assign car4_fill=vCount>=(ypos_car4-34) && vCount<=(ypos_car4+34) && hCount>=(xpos_car4-34) && hCount<=(xpos_car4+34);
 	
 	always@(posedge clk, posedge rst) 
 	begin
@@ -87,32 +147,24 @@ module block_controller(
 			ypos<=250;
 		end
 		else if (clk) begin
-		
 		/* Note that the top left of the screen does NOT correlate to vCount=0 and hCount=0. The display_controller.v file has the 
 			synchronizing pulses for both the horizontal sync and the vertical sync begin at vcount=0 and hcount=0. Recall that after 
 			the length of the pulse, there is also a short period called the back porch before the display area begins. So effectively, 
 			the top left corner corresponds to (hcount,vcount)~(144,35). Which means with a 640x480 resolution, the bottom right corner 
 			corresponds to ~(783,515).  
 		*/
-			if(right) begin
-				xpos<=xpos+2; //change the amount you increment to make the speed faster 
-				if(xpos==800) //these are rough values to attempt looping around, you can fine-tune them to make it more accurate- refer to the block comment above
-					xpos<=150;
-			end
-			else if(left) begin
-				xpos<=xpos-2;
-				if(xpos==150)
-					xpos<=800;
-			end
-			else if(up) begin
-				ypos<=ypos-2;
-				if(ypos==34)
-					ypos<=514;
-			end
-			else if(down) begin
-				ypos<=ypos+2;
-				if(ypos==514)
-					ypos<=34;
+		// Since game is "vertical" down and up is left and right respectfully
+			if((state == GAMING)||(state == HIT)) begin
+				if(up) begin
+					ypos<=ypos-2;
+					if(ypos==34)
+						ypos<=514;
+				end
+				else if(down) begin
+					ypos<=ypos+2;
+					if(ypos==514)
+						ypos<=34;
+				end
 			end
 		end
 	end
@@ -132,8 +184,8 @@ module block_controller(
 				background <= 12'b0000_0000_1111;
 				*/
 	end
-	// Obstacles
 	
+	// Obstacles
 	always@(posedge clk, posedge rst) begin
 		if(rst)
 		begin 

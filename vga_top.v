@@ -65,8 +65,9 @@ module vga_top(
 	assign move_clk=DIV_CLK[19]; //slower clock to drive the movement of objects on the vga screen
 	wire [11:0] background;
 	wire [2:0] lives;
+	wire [3:0] state;
 	display_controller dc(.clk(ClkPort), .hSync(hSync), .vSync(vSync), .bright(bright), .hCount(hc), .vCount(vc));
-	block_controller sc(.clk(move_clk), .bright(bright), .rst(BtnC), .up(BtnU), .down(BtnD),.left(BtnL),.right(BtnR),.hCount(hc), .vCount(vc), .rgb(rgb), .background(background), .lives(lives));
+	block_controller sc(.clk(move_clk), .bright(bright), .rst(BtnC), .up(BtnU), .down(BtnD),.left(BtnL),.right(BtnR),.hCount(hc), .vCount(vc), .rgb(rgb), .background(background), .lives(lives), .state(state));
 	
 
 
@@ -85,7 +86,7 @@ module vga_top(
 	
 	//SSDs display 
 	//to show how we can interface our "game" module with the SSD's, we output the 12-bit rgb background value to the SSD's
-	assign SSD3 = 1'b0;
+	assign SSD3 = state;
 	assign SSD2 = 1'b0;
 	assign SSD1 = 1'b0;
 	assign SSD0 = lives;
