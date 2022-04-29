@@ -42,12 +42,12 @@ module vga_top(
 	assign Reset=BtnC;
 	wire bright;
 	wire[9:0] hc, vc;
-	wire[15:0] score;
 	wire up,down,left,right;
 	wire [3:0] anode;
 	wire [11:0] rgb;
 	wire rst;
 	
+	wire [2:0] lives;
 	reg [3:0]	SSD;
 	wire [3:0]	SSD3, SSD2, SSD1, SSD0;
 	reg [7:0]  	SSD_CATHODES;
@@ -64,10 +64,9 @@ module vga_top(
 	wire move_clk;
 	assign move_clk=DIV_CLK[19]; //slower clock to drive the movement of objects on the vga screen
 	wire [11:0] background;
-	wire [2:0] lives;
-	wire [3:0] state;
+
 	display_controller dc(.clk(ClkPort), .hSync(hSync), .vSync(vSync), .bright(bright), .hCount(hc), .vCount(vc));
-	block_controller sc(.clk(move_clk), .bright(bright), .rst(BtnC), .up(BtnU), .down(BtnD),.left(BtnL),.right(BtnR),.hCount(hc), .vCount(vc), .rgb(rgb), .background(background), .lives(lives), .state(state));
+	block_controller sc(.clk(move_clk), .bright(bright), .rst(BtnC), .up(BtnU), .down(BtnD),.left(BtnL),.right(BtnR),.hCount(hc), .vCount(vc), .rgb(rgb), .background(background), .lives(lives));
 	
 
 
@@ -86,32 +85,11 @@ module vga_top(
 	
 	//SSDs display 
 	//to show how we can interface our "game" module with the SSD's, we output the 12-bit rgb background value to the SSD's
-	assign SSD3 = state;
+	assign SSD3 = 1'b0;
 	assign SSD2 = 1'b0;
 	assign SSD1 = 1'b0;
 	assign SSD0 = lives;
 
-
-	// need a scan clk for the seven segment display 
-	
-	// 100 MHz / 2^18 = 381.5 cycles/sec ==> frequency of DIV_CLK[17]
-	// 100 MHz / 2^19 = 190.7 cycles/sec ==> frequency of DIV_CLK[18]
-	// 100 MHz / 2^20 =  95.4 cycles/sec ==> frequency of DIV_CLK[19]
-	
-	// 381.5 cycles/sec (2.62 ms per digit) [which means all 4 digits are lit once every 10.5 ms (reciprocal of 95.4 cycles/sec)] works well.
-	
-	//                  --|  |--|  |--|  |--|  |--|  |--|  |--|  |--|  |   
-    //                    |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
-	//  DIV_CLK[17]       |__|  |__|  |__|  |__|  |__|  |__|  |__|  |__|
-	//
-	//               -----|     |-----|     |-----|     |-----|     |
-    //                    |  0  |  1  |  0  |  1  |     |     |     |     
-	//  DIV_CLK[18]       |_____|     |_____|     |_____|     |_____|
-	//
-	//         -----------|           |-----------|           |
-    //                    |  0     0  |  1     1  |           |           
-	//  DIV_CLK[19]       |___________|           |___________|
-	//
 
 	assign ssdscan_clk = DIV_CLK[19:18];
 	assign An0	= !(~(ssdscan_clk[1]) && ~(ssdscan_clk[0]));  // when ssdscan_clk = 00
